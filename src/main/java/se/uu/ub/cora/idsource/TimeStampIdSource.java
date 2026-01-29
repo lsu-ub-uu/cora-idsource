@@ -18,37 +18,22 @@
  */
 package se.uu.ub.cora.idsource;
 
-import static org.testng.Assert.assertEquals;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
 
-public class SequenceIdSourceTest {
+public class TimeStampIdSource implements IdSource {
 
-	private static final String SEQUENCE_ID = "someSequenceId";
-	private IdSource idSource;
-	private SequenceSpy sequence;
+	private String type;
 
-	@BeforeMethod
-	private void beforeMethod() {
-		sequence = new SequenceSpy();
-		idSource = new SequenceIdSource(sequence, SEQUENCE_ID);
+	public TimeStampIdSource(String type) {
+		this.type = type;
 	}
 
-	@Test
-	public void testGetId() {
-		sequence.MRV.setDefaultReturnValuesSupplier("getNextValueForSequence", () -> 111L);
-
-		String id = idSource.getId();
-
-		sequence.MCR.assertParameters("getNextValueForSequence", 0, SEQUENCE_ID);
-		assertEquals(id, "111");
+	@Override
+	public synchronized String getId() {
+		return type + ":" + System.nanoTime();
 	}
 
-	@Test
-	public void testOnlyForTest() {
-		assertEquals(((SequenceIdSource) idSource).onlyForTestSequenceId(), SEQUENCE_ID);
+	public String onlyForTestGetRecordTypeId() {
+		return type;
 	}
 }

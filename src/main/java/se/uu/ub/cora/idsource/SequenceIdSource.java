@@ -18,37 +18,26 @@
  */
 package se.uu.ub.cora.idsource;
 
-import static org.testng.Assert.assertEquals;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
+import se.uu.ub.cora.sqldatabase.sequence.Sequence;
 
-public class SequenceIdSourceTest {
+public class SequenceIdSource implements IdSource {
 
-	private static final String SEQUENCE_ID = "someSequenceId";
-	private IdSource idSource;
-	private SequenceSpy sequence;
+	private String sequenceId;
+	private Sequence sequence;
 
-	@BeforeMethod
-	private void beforeMethod() {
-		sequence = new SequenceSpy();
-		idSource = new SequenceIdSource(sequence, SEQUENCE_ID);
+	public SequenceIdSource(Sequence sequence, String sequenceId) {
+		this.sequence = sequence;
+		this.sequenceId = sequenceId;
 	}
 
-	@Test
-	public void testGetId() {
-		sequence.MRV.setDefaultReturnValuesSupplier("getNextValueForSequence", () -> 111L);
-
-		String id = idSource.getId();
-
-		sequence.MCR.assertParameters("getNextValueForSequence", 0, SEQUENCE_ID);
-		assertEquals(id, "111");
+	@Override
+	public String getId() {
+		long nextValueForSequence = sequence.getNextValueForSequence(sequenceId);
+		return String.valueOf(nextValueForSequence);
 	}
 
-	@Test
-	public void testOnlyForTest() {
-		assertEquals(((SequenceIdSource) idSource).onlyForTestSequenceId(), SEQUENCE_ID);
+	public String onlyForTestSequenceId() {
+		return sequenceId;
 	}
 }
