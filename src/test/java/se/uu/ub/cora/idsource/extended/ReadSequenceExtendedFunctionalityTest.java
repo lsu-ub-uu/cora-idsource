@@ -22,9 +22,12 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import se.uu.ub.cora.data.DataProvider;
+import se.uu.ub.cora.data.spies.DataFactorySpy;
 import se.uu.ub.cora.data.spies.DataRecordGroupSpy;
 import se.uu.ub.cora.idsource.IdSourceException;
 import se.uu.ub.cora.idsource.SequenceSpy;
@@ -32,41 +35,52 @@ import se.uu.ub.cora.idsource.spy.SqlDatabaseFactorySpy;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionality;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityData;
 
-public class CreateSequenceExtendedFunctionalityTest {
+public class ReadSequenceExtendedFunctionalityTest {
 
 	private ExtendedFunctionality extFunc;
 	private DataRecordGroupSpy dataRecordGroup;
 	private ExtendedFunctionalityData data;
 	private SqlDatabaseFactorySpy sqlDatabaseFactory;
+	private DataFactorySpy dataFactorySpy;
 
 	@BeforeMethod
 	private void beforeMethod() {
 		sqlDatabaseFactory = new SqlDatabaseFactorySpy();
-		extFunc = CreateSequenceExtendedFunctionality.usingDatabaseFactory(sqlDatabaseFactory);
-
+		extFunc = ReadSequenceExtendedFunctionality.usingDatabaseFactory(sqlDatabaseFactory);
+		dataFactorySpy = new DataFactorySpy();
+		DataProvider.onlyForTestSetDataFactory(dataFactorySpy);
 		setData();
 	}
 
 	private void setData() {
 		dataRecordGroup = new DataRecordGroupSpy();
 		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getId", () -> "someId");
-		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getFirstAtomicValueWithNameInData",
-				() -> "100");
 		data = new ExtendedFunctionalityData();
 		data.dataRecordGroup = dataRecordGroup;
 	}
 
-	@Test
-	public void testCreateSequence() {
-		extFunc.useExtendedFunctionality(data);
-
-		SequenceSpy sequence = (SequenceSpy) sqlDatabaseFactory.MCR
-				.assertCalledParametersReturn("factorSequence");
-		sequence.MCR.assertCalledParameters("createSequence", "someId", 100L);
+	@AfterMethod
+	private void afterMethod() {
+		DataProvider.onlyForTestSetDataFactory(null);
 	}
 
 	@Test
-	public void testCreateSequence_isClosed() {
+	public void testReadSequence() {
+		SequenceSpy sequenceSpy = new SequenceSpy();
+		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
+		sequenceSpy.MRV.setDefaultReturnValuesSupplier("getCurrentValueForSequence", () -> 222L);
+
+		extFunc.useExtendedFunctionality(data);
+
+		dataRecordGroup.MCR.assertCalledParametersReturn("removeAllChildrenWithNameInData",
+				"currentNumber");
+		var newCurrentNumber = dataFactorySpy.MCR.assertCalledParametersReturn(
+				"factorAtomicUsingNameInDataAndValue", "currentNumber", "222");
+		dataRecordGroup.MCR.assertCalledParameters("addChild", newCurrentNumber);
+	}
+
+	@Test
+	public void testReadSequence_isClosed() {
 		extFunc.useExtendedFunctionality(data);
 
 		SequenceSpy sequence = (SequenceSpy) sqlDatabaseFactory.MCR
@@ -75,17 +89,18 @@ public class CreateSequenceExtendedFunctionalityTest {
 	}
 
 	@Test
-	public void testCreateSequence_error() {
+	public void testReadSequence_error() {
 		SequenceSpy sequenceSpy = new SequenceSpy();
 		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
 		RuntimeException error = new RuntimeException("some error");
-		sequenceSpy.MRV.setAlwaysThrowException("createSequence", error);
+		sequenceSpy.MRV.setAlwaysThrowException("getCurrentValueForSequence", error);
 		try {
 			extFunc.useExtendedFunctionality(data);
 			fail();
 		} catch (Exception e) {
 			assertTrue(e instanceof IdSourceException);
-			assertEquals(e.getMessage(), "Error creating sequence with id: someId");
+			assertEquals(e.getMessage(),
+					"Error reading current value for sequence with id: someId");
 			assertEquals(e.getCause(), error);
 		}
 

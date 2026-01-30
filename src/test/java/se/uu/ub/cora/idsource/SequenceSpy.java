@@ -54,7 +54,7 @@ public class SequenceSpy implements Sequence {
 	}
 
 	@Override
-	public void removeSequence(String sequenceName) {
+	public void deleteSequence(String sequenceName) {
 		MCR.addCall("sequenceName", sequenceName);
 	}
 

@@ -32,7 +32,7 @@ import se.uu.ub.cora.idsource.spy.SqlDatabaseFactorySpy;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionality;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityData;
 
-public class CreateSequenceExtendedFunctionalityTest {
+public class UpdateSequenceExtendedFunctionalityTest {
 
 	private ExtendedFunctionality extFunc;
 	private DataRecordGroupSpy dataRecordGroup;
@@ -42,7 +42,7 @@ public class CreateSequenceExtendedFunctionalityTest {
 	@BeforeMethod
 	private void beforeMethod() {
 		sqlDatabaseFactory = new SqlDatabaseFactorySpy();
-		extFunc = CreateSequenceExtendedFunctionality.usingDatabaseFactory(sqlDatabaseFactory);
+		extFunc = UpdateSequenceExtendedFunctionality.usingDatabaseFactory(sqlDatabaseFactory);
 
 		setData();
 	}
@@ -57,16 +57,16 @@ public class CreateSequenceExtendedFunctionalityTest {
 	}
 
 	@Test
-	public void testCreateSequence() {
+	public void testUpdateSequence() {
 		extFunc.useExtendedFunctionality(data);
 
 		SequenceSpy sequence = (SequenceSpy) sqlDatabaseFactory.MCR
 				.assertCalledParametersReturn("factorSequence");
-		sequence.MCR.assertCalledParameters("createSequence", "someId", 100L);
+		sequence.MCR.assertCalledParameters("updateSequenceValue", "someId", 100L);
 	}
 
 	@Test
-	public void testCreateSequence_isClosed() {
+	public void testUpdateSequence_isClosed() {
 		extFunc.useExtendedFunctionality(data);
 
 		SequenceSpy sequence = (SequenceSpy) sqlDatabaseFactory.MCR
@@ -75,17 +75,17 @@ public class CreateSequenceExtendedFunctionalityTest {
 	}
 
 	@Test
-	public void testCreateSequence_error() {
+	public void testUpdateSequence_error() {
 		SequenceSpy sequenceSpy = new SequenceSpy();
 		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
 		RuntimeException error = new RuntimeException("some error");
-		sequenceSpy.MRV.setAlwaysThrowException("createSequence", error);
+		sequenceSpy.MRV.setAlwaysThrowException("updateSequenceValue", error);
 		try {
 			extFunc.useExtendedFunctionality(data);
 			fail();
 		} catch (Exception e) {
 			assertTrue(e instanceof IdSourceException);
-			assertEquals(e.getMessage(), "Error creating sequence with id: someId");
+			assertEquals(e.getMessage(), "Error updating sequence with id: someId");
 			assertEquals(e.getCause(), error);
 		}
 

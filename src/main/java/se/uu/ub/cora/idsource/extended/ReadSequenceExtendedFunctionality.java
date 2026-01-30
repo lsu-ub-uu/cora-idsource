@@ -18,6 +18,8 @@
  */
 package se.uu.ub.cora.idsource.extended;
 
+import se.uu.ub.cora.data.DataAtomic;
+import se.uu.ub.cora.data.DataProvider;
 import se.uu.ub.cora.data.DataRecordGroup;
 import se.uu.ub.cora.idsource.IdSourceException;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionality;
@@ -25,34 +27,41 @@ import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityData;
 import se.uu.ub.cora.sqldatabase.SqlDatabaseFactory;
 import se.uu.ub.cora.sqldatabase.sequence.Sequence;
 
-public class CreateSequenceExtendedFunctionality implements ExtendedFunctionality {
+public class ReadSequenceExtendedFunctionality implements ExtendedFunctionality {
 
+	private static final String CURRENT_NUMBER = "currentNumber";
 	private SqlDatabaseFactory sqlDatabaseFactory;
 
-	public static CreateSequenceExtendedFunctionality usingDatabaseFactory(
+	public static ReadSequenceExtendedFunctionality usingDatabaseFactory(
 			SqlDatabaseFactory sqlDatabaseFactory) {
-		return new CreateSequenceExtendedFunctionality(sqlDatabaseFactory);
+		return new ReadSequenceExtendedFunctionality(sqlDatabaseFactory);
 	}
 
-	private CreateSequenceExtendedFunctionality(SqlDatabaseFactory sqlDatabaseFactory) {
+	private ReadSequenceExtendedFunctionality(SqlDatabaseFactory sqlDatabaseFactory) {
 		this.sqlDatabaseFactory = sqlDatabaseFactory;
 	}
 
 	@Override
 	public void useExtendedFunctionality(ExtendedFunctionalityData data) {
 		DataRecordGroup dataRecordGroup = data.dataRecordGroup;
-		String sequenceId = dataRecordGroup.getId();
-		String startValue = dataRecordGroup.getFirstAtomicValueWithNameInData("currentNumber");
-
-		createSequence(sequenceId, Long.valueOf(startValue));
+		long sequenceCurrentNumbre = readCurrentNumberFromSequence(dataRecordGroup.getId());
+		replaceCurrentNumber(dataRecordGroup, sequenceCurrentNumbre);
 	}
 
-	private void createSequence(String sequenceId, Long value) {
+	private void replaceCurrentNumber(DataRecordGroup dataRecordGroup, long sequenceCurrentNumber) {
+		dataRecordGroup.removeAllChildrenWithNameInData(CURRENT_NUMBER);
+		String valueOf = String.valueOf(sequenceCurrentNumber);
+		DataAtomic currentNumber = DataProvider.createAtomicUsingNameInDataAndValue(CURRENT_NUMBER,
+				valueOf);
+		dataRecordGroup.addChild(currentNumber);
+	}
+
+	private long readCurrentNumberFromSequence(String sequenceId) {
 		try (Sequence sequence = sqlDatabaseFactory.factorSequence()) {
-			sequence.createSequence(sequenceId, value);
+			return sequence.getCurrentValueForSequence(sequenceId);
 		} catch (Exception e) {
-			throw IdSourceException
-					.withMessageAndException("Error creating sequence with id: " + sequenceId, e);
+			throw IdSourceException.withMessageAndException(
+					"Error reading current value for sequence with id: " + sequenceId, e);
 		}
 	}
 }

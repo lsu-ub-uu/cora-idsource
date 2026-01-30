@@ -25,16 +25,16 @@ import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityData;
 import se.uu.ub.cora.sqldatabase.SqlDatabaseFactory;
 import se.uu.ub.cora.sqldatabase.sequence.Sequence;
 
-public class CreateSequenceExtendedFunctionality implements ExtendedFunctionality {
+public class UpdateSequenceExtendedFunctionality implements ExtendedFunctionality {
 
 	private SqlDatabaseFactory sqlDatabaseFactory;
 
-	public static CreateSequenceExtendedFunctionality usingDatabaseFactory(
+	public static UpdateSequenceExtendedFunctionality usingDatabaseFactory(
 			SqlDatabaseFactory sqlDatabaseFactory) {
-		return new CreateSequenceExtendedFunctionality(sqlDatabaseFactory);
+		return new UpdateSequenceExtendedFunctionality(sqlDatabaseFactory);
 	}
 
-	private CreateSequenceExtendedFunctionality(SqlDatabaseFactory sqlDatabaseFactory) {
+	private UpdateSequenceExtendedFunctionality(SqlDatabaseFactory sqlDatabaseFactory) {
 		this.sqlDatabaseFactory = sqlDatabaseFactory;
 	}
 
@@ -44,15 +44,15 @@ public class CreateSequenceExtendedFunctionality implements ExtendedFunctionalit
 		String sequenceId = dataRecordGroup.getId();
 		String startValue = dataRecordGroup.getFirstAtomicValueWithNameInData("currentNumber");
 
-		createSequence(sequenceId, Long.valueOf(startValue));
+		updateSequence(sequenceId, Long.valueOf(startValue));
 	}
 
-	private void createSequence(String sequenceId, Long value) {
+	private void updateSequence(String sequenceId, Long value) {
 		try (Sequence sequence = sqlDatabaseFactory.factorSequence()) {
-			sequence.createSequence(sequenceId, value);
+			sequence.updateSequenceValue(sequenceId, value);
 		} catch (Exception e) {
 			throw IdSourceException
-					.withMessageAndException("Error creating sequence with id: " + sequenceId, e);
+					.withMessageAndException("Error updating sequence with id: " + sequenceId, e);
 		}
 	}
 }

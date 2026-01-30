@@ -32,7 +32,7 @@ import se.uu.ub.cora.idsource.spy.SqlDatabaseFactorySpy;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionality;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityData;
 
-public class CreateSequenceExtendedFunctionalityTest {
+public class DeleteSequenceExtendedFunctionalityTest {
 
 	private ExtendedFunctionality extFunc;
 	private DataRecordGroupSpy dataRecordGroup;
@@ -42,7 +42,7 @@ public class CreateSequenceExtendedFunctionalityTest {
 	@BeforeMethod
 	private void beforeMethod() {
 		sqlDatabaseFactory = new SqlDatabaseFactorySpy();
-		extFunc = CreateSequenceExtendedFunctionality.usingDatabaseFactory(sqlDatabaseFactory);
+		extFunc = DeleteSequenceExtendedFunctionality.usingDatabaseFactory(sqlDatabaseFactory);
 
 		setData();
 	}
@@ -50,23 +50,21 @@ public class CreateSequenceExtendedFunctionalityTest {
 	private void setData() {
 		dataRecordGroup = new DataRecordGroupSpy();
 		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getId", () -> "someId");
-		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getFirstAtomicValueWithNameInData",
-				() -> "100");
 		data = new ExtendedFunctionalityData();
 		data.dataRecordGroup = dataRecordGroup;
 	}
 
 	@Test
-	public void testCreateSequence() {
+	public void testDeleteSequence() {
 		extFunc.useExtendedFunctionality(data);
 
 		SequenceSpy sequence = (SequenceSpy) sqlDatabaseFactory.MCR
 				.assertCalledParametersReturn("factorSequence");
-		sequence.MCR.assertCalledParameters("createSequence", "someId", 100L);
+		sequence.MCR.assertCalledParameters("deleteSequence", "someId");
 	}
 
 	@Test
-	public void testCreateSequence_isClosed() {
+	public void testDeleteSequence_isClosed() {
 		extFunc.useExtendedFunctionality(data);
 
 		SequenceSpy sequence = (SequenceSpy) sqlDatabaseFactory.MCR
@@ -75,17 +73,17 @@ public class CreateSequenceExtendedFunctionalityTest {
 	}
 
 	@Test
-	public void testCreateSequence_error() {
+	public void testDeleteSequence_error() {
 		SequenceSpy sequenceSpy = new SequenceSpy();
 		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
 		RuntimeException error = new RuntimeException("some error");
-		sequenceSpy.MRV.setAlwaysThrowException("createSequence", error);
+		sequenceSpy.MRV.setAlwaysThrowException("deleteSequence", error);
 		try {
 			extFunc.useExtendedFunctionality(data);
 			fail();
 		} catch (Exception e) {
 			assertTrue(e instanceof IdSourceException);
-			assertEquals(e.getMessage(), "Error creating sequence with id: someId");
+			assertEquals(e.getMessage(), "Error deleting sequence with id: someId");
 			assertEquals(e.getCause(), error);
 		}
 
