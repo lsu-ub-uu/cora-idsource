@@ -33,12 +33,17 @@
 	<properties>
 		<bookkeeper.version>11.5-SNAPSHOT</bookkeeper.version>
 		<initialize.version>1.8-SNAPSHOT</initialize.version>
+		<spider.version>10.6-SNAPSHOT</spider.version>
 		<coradata.version>11.1.0</coradata.version>
+		<coradata-spies.version>3.1.0</coradata-spies.version>
 		<json.version>3.10.0</json.version>
 		<logger.version>2.10.0</logger.version>
 		<logger-spies.version>1.5.0</logger-spies.version>
 		<storage.version>10.0.0</storage.version>
 		<sqldatabase.version>7.4-SNAPSHOT</sqldatabase.version>
+		<search.version>6.0.0</search.version>
+		<beefeater.version>4.0.0</beefeater.version>
+		<messaging.version>3.1.0</messaging.version>
 		<testutils.version>1.14.0</testutils.version>
 	</properties>
 
@@ -64,8 +69,20 @@
 		</dependency>
 		<dependency>
 			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>spider</artifactId>
+			<version>${spider.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
 			<artifactId>coradata</artifactId>
 			<version>${coradata.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>coradata-spies</artifactId>
+			<version>${coradata-spies.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -96,6 +113,24 @@
 			<groupId>se.uu.ub.cora</groupId>
 			<artifactId>sqldatabase</artifactId>
 			<version>${sqldatabase.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>search</artifactId>
+			<version>${search.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>beefeater</artifactId>
+			<version>${beefeater.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>se.uu.ub.cora</groupId>
+			<artifactId>messaging</artifactId>
+			<version>${messaging.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
