@@ -21,19 +21,41 @@ package se.uu.ub.cora.idsource;
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
 import se.uu.ub.cora.bookkeeper.idsource.IdSourceInstanceProvider;
 import se.uu.ub.cora.bookkeeper.recordtype.RecordType;
+import se.uu.ub.cora.initialize.SettingsProvider;
+import se.uu.ub.cora.sqldatabase.SqlDatabaseFactory;
+import se.uu.ub.cora.sqldatabase.SqlDatabaseFactoryImp;
 
 public class SequenceInstanceProviderImp implements IdSourceInstanceProvider {
+	private SqlDatabaseFactory databaseFactory;
+
+	public SequenceInstanceProviderImp() {
+		startStorage();
+	}
+
+	private void startStorage() {
+		String databaseLookupValue = SettingsProvider.getSetting("coraDatabaseLookupName");
+		databaseFactory = SqlDatabaseFactoryImp.usingLookupNameFromContext(databaseLookupValue);
+	}
 
 	@Override
 	public IdSource getIdSource(RecordType recordType) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			return new SequenceIdSource(databaseFactory, getSequenceIdWhichMustExists(recordType));
+		} catch (Exception e) {
+			throw IdSourceException.withMessageAndException("Getting idSource failed", e);
+		}
+	}
+
+	private String getSequenceIdWhichMustExists(RecordType recordType) {
+		return recordType.sequenceId().get();
 	}
 
 	@Override
 	public String getTypeToSelectImplementionsBy() {
-		// TODO Auto-generated method stub
 		return "sequence";
 	}
 
+	public SqlDatabaseFactory onlyForTestGetSqlDatabaseFactory() {
+		return databaseFactory;
+	}
 }

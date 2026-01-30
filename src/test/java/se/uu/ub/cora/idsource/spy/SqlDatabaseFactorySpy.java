@@ -16,50 +16,47 @@
  *     You should have received a copy of the GNU General Public License
  *     along with Cora.  If not, see <http://www.gnu.org/licenses/>.
  */
-package se.uu.ub.cora.idsource;
+package se.uu.ub.cora.idsource.spy;
 
+import se.uu.ub.cora.idsource.SequenceSpy;
+import se.uu.ub.cora.sqldatabase.DatabaseFacade;
+import se.uu.ub.cora.sqldatabase.SqlDatabaseFactory;
 import se.uu.ub.cora.sqldatabase.sequence.Sequence;
+import se.uu.ub.cora.sqldatabase.table.TableFacade;
+import se.uu.ub.cora.sqldatabase.table.TableQuery;
 import se.uu.ub.cora.testutils.mcr.MethodCallRecorder;
 import se.uu.ub.cora.testutils.mrv.MethodReturnValues;
 
-public class SequenceSpy implements Sequence {
-
+public class SqlDatabaseFactorySpy implements SqlDatabaseFactory {
 	public MethodCallRecorder MCR = new MethodCallRecorder();
 	public MethodReturnValues MRV = new MethodReturnValues();
 
-	public SequenceSpy() {
+	public SqlDatabaseFactorySpy() {
 		MCR.useMRV(MRV);
-		MRV.setDefaultReturnValuesSupplier("getCurrentValueForSequence", () -> 0L);
-		MRV.setDefaultReturnValuesSupplier("getNextValueForSequence", () -> 1L);
+		MRV.setDefaultReturnValuesSupplier("factorSequence", SequenceSpy::new);
 	}
 
 	@Override
-	public void createSequence(String sequenceName, long startValue) {
-		MCR.addCall("sequenceName", sequenceName, "startValue", startValue);
+	public DatabaseFacade factorDatabaseFacade() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public long getCurrentValueForSequence(String sequenceName) {
-		return (long) MCR.addCallAndReturnFromMRV("sequenceName", sequenceName);
+	public TableFacade factorTableFacade() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public long getNextValueForSequence(String sequenceName) {
-		return (long) MCR.addCallAndReturnFromMRV("sequenceName", sequenceName);
+	public TableQuery factorTableQuery(String tableName) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public void updateSequenceValue(String sequenceName, long value) {
-		MCR.addCall("sequenceName", sequenceName, "value", value);
+	public Sequence factorSequence() {
+		return (Sequence) MCR.addCallAndReturnFromMRV();
 	}
 
-	@Override
-	public void removeSequence(String sequenceName) {
-		MCR.addCall("sequenceName", sequenceName);
-	}
-
-	@Override
-	public void close() {
-		MCR.addCall();
-	}
 }

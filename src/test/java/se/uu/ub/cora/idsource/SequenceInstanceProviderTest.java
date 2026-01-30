@@ -20,25 +20,43 @@ package se.uu.ub.cora.idsource;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import se.uu.ub.cora.bookkeeper.idsource.IdSourceInstanceProvider;
 import se.uu.ub.cora.bookkeeper.recordtype.RecordType;
+import se.uu.ub.cora.initialize.SettingsProvider;
+import se.uu.ub.cora.logger.LoggerFactory;
+import se.uu.ub.cora.logger.LoggerProvider;
+import se.uu.ub.cora.logger.spies.LoggerFactorySpy;
+import se.uu.ub.cora.sqldatabase.SqlDatabaseFactoryImp;
 
 public class SequenceInstanceProviderTest {
 
-	IdSourceInstanceProvider provider;
+	SequenceInstanceProviderImp provider;
 	private RecordType recordType;
 
 	@BeforeMethod
 	void beforeMethod() {
+		recordType = createRecordTypeIdSource();
+		LoggerFactory loggerFactory = new LoggerFactorySpy();
+		LoggerProvider.setLoggerFactory(loggerFactory);
+
+		setUpSettingsProvider();
+
 		provider = new SequenceInstanceProviderImp();
-		createRecordTypeIdSource();
+	}
+
+	private void setUpSettingsProvider() {
+		Map<String, String> settings = new HashMap<>();
+		settings.put("coraDatabaseLookupName", "someDatabase");
+		SettingsProvider.setSettings(settings);
 	}
 
 	@Test
@@ -47,20 +65,47 @@ public class SequenceInstanceProviderTest {
 	}
 
 	@Test
-	public void testGetIdSource() {
-		TimeStampIdSource idSource = (TimeStampIdSource) provider.getIdSource(recordType);
-		assertTrue(idSource instanceof TimeStampIdSource);
-		assertEquals(idSource.onlyForTestGetRecordTypeId(), recordType.id());
+	public void testGetIdSource_DatabaseFactory() {
+		SequenceIdSource idSource = (SequenceIdSource) provider.getIdSource(recordType);
+
+		SqlDatabaseFactoryImp sqlDatabaseFactory = (SqlDatabaseFactoryImp) idSource
+				.onlyForTestGetDatabaseFactory();
+		assertEquals(sqlDatabaseFactory.onlyForTestGetLookupName(), "someDatabase");
 	}
 
-	private void createRecordTypeIdSource() {
+	@Test
+	public void testGetIdSource_usesSequenceIdFromRecordType() {
+		SequenceIdSource idSource = (SequenceIdSource) provider.getIdSource(recordType);
+
+		assertTrue(idSource instanceof SequenceIdSource);
+		assertEquals(idSource.onlyForTestGetSequenceId(), "sequenceId");
+	}
+
+	@Test
+	public void testGetIdSource_throwsIdSourceException() {
+		recordType = createRecordTypeIdSource(Optional.empty());
+		try {
+			provider.getIdSource(recordType);
+			fail();
+		} catch (Exception e) {
+			assertTrue(e instanceof IdSourceException);
+			assertEquals(e.getMessage(), "Getting idSource failed");
+			assertEquals(e.getCause().getMessage(), "No value present");
+		}
+	}
+
+	private RecordType createRecordTypeIdSource() {
+		return createRecordTypeIdSource(Optional.of("sequenceId"));
+	}
+
+	private RecordType createRecordTypeIdSource(Optional<String> sequenceId) {
 		boolean isPublic = true;
 		boolean usePermissionUnit = true;
 		boolean useVisibility = true;
 		boolean useTrashBin = true;
 		boolean storeInArchive = true;
-		recordType = new RecordType("someRecordTypeId", "someDefinitionId", Optional.empty(),
-				"someIdSource", Optional.of("sequenceId"), Collections.emptyList(), isPublic,
-				usePermissionUnit, useVisibility, useTrashBin, storeInArchive);
+		return new RecordType("someRecordTypeId", "someDefinitionId", Optional.empty(),
+				"someIdSource", sequenceId, Collections.emptyList(), isPublic, usePermissionUnit,
+				useVisibility, useTrashBin, storeInArchive);
 	}
 }

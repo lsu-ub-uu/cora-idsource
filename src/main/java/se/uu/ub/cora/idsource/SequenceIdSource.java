@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Uppsala University Library
+ * Copyright 2025, 2026 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -19,25 +19,39 @@
 package se.uu.ub.cora.idsource;
 
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
+import se.uu.ub.cora.sqldatabase.SqlDatabaseFactory;
 import se.uu.ub.cora.sqldatabase.sequence.Sequence;
 
 public class SequenceIdSource implements IdSource {
 
 	private String sequenceId;
-	private Sequence sequence;
+	private SqlDatabaseFactory sqlDatabaseFactory;
 
-	public SequenceIdSource(Sequence sequence, String sequenceId) {
-		this.sequence = sequence;
+	public SequenceIdSource(SqlDatabaseFactory sqlDatabaseFactory, String sequenceId) {
+		this.sqlDatabaseFactory = sqlDatabaseFactory;
 		this.sequenceId = sequenceId;
 	}
 
 	@Override
 	public String getId() {
+		try (Sequence sequence = sqlDatabaseFactory.factorSequence()) {
+			return tryToGetId(sequence);
+		} catch (Exception e) {
+			throw IdSourceException.withMessageAndException("Getting id failed", e);
+		}
+	}
+
+	private String tryToGetId(Sequence sequence) {
 		long nextValueForSequence = sequence.getNextValueForSequence(sequenceId);
 		return String.valueOf(nextValueForSequence);
 	}
 
-	public String onlyForTestSequenceId() {
+	public SqlDatabaseFactory onlyForTestGetDatabaseFactory() {
+		return sqlDatabaseFactory;
+	}
+
+	public String onlyForTestGetSequenceId() {
 		return sequenceId;
 	}
+
 }

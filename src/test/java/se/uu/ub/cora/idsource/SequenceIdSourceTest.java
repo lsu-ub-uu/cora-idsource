@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Uppsala University Library
+ * Copyright 2025, 2026 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -19,22 +19,28 @@
 package se.uu.ub.cora.idsource;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
+import se.uu.ub.cora.idsource.spy.SqlDatabaseFactorySpy;
 
 public class SequenceIdSourceTest {
 
 	private static final String SEQUENCE_ID = "someSequenceId";
-	private IdSource idSource;
 	private SequenceSpy sequence;
+	private IdSource idSource;
+	private SqlDatabaseFactorySpy sqlDatabaseFactorySpy;
 
 	@BeforeMethod
 	private void beforeMethod() {
+		sqlDatabaseFactorySpy = new SqlDatabaseFactorySpy();
 		sequence = new SequenceSpy();
-		idSource = new SequenceIdSource(sequence, SEQUENCE_ID);
+		sqlDatabaseFactorySpy.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequence);
+		idSource = new SequenceIdSource(sqlDatabaseFactorySpy, SEQUENCE_ID);
 	}
 
 	@Test
@@ -43,12 +49,39 @@ public class SequenceIdSourceTest {
 
 		String id = idSource.getId();
 
+		sequence = (SequenceSpy) sqlDatabaseFactorySpy.MCR.getReturnValue("factorSequence", 0);
 		sequence.MCR.assertParameters("getNextValueForSequence", 0, SEQUENCE_ID);
 		assertEquals(id, "111");
 	}
 
 	@Test
+	public void testSequenceIsClosed() {
+		sequence.MRV.setDefaultReturnValuesSupplier("getNextValueForSequence", () -> 111L);
+
+		idSource.getId();
+
+		sequence.MCR.assertMethodWasCalled("close");
+	}
+
+	@Test
+	public void testGetId_throwsIdSourceException() {
+		RuntimeException runtimeException = new RuntimeException("some error");
+		sequence.MRV.setAlwaysThrowException("getNextValueForSequence", runtimeException);
+
+		try {
+			idSource.getId();
+			fail();
+		} catch (Exception e) {
+			assertTrue(e instanceof IdSourceException);
+			assertEquals(e.getMessage(), "Getting id failed");
+			assertEquals(e.getCause(), runtimeException);
+		}
+	}
+
+	@Test
 	public void testOnlyForTest() {
-		assertEquals(((SequenceIdSource) idSource).onlyForTestSequenceId(), SEQUENCE_ID);
+		SequenceIdSource sequenceIdSource = (SequenceIdSource) idSource;
+		assertEquals(sequenceIdSource.onlyForTestGetDatabaseFactory(), sqlDatabaseFactorySpy);
+		assertEquals(sequenceIdSource.onlyForTestGetSequenceId(), SEQUENCE_ID);
 	}
 }
