@@ -91,4 +91,11 @@ public class UpdateSequenceExtendedFunctionalityTest {
 
 	}
 
+	@Test
+	public void testOnlyForTest() {
+		assertEquals(
+				((UpdateSequenceExtendedFunctionality) extFunc).onlyForTestGetDatabaseFactory(),
+				sqlDatabaseFactory);
+	}
+
 }

@@ -106,4 +106,10 @@ public class ReadSequenceExtendedFunctionalityTest {
 
 	}
 
+	@Test
+	public void testOnlyForTest() {
+		assertEquals(((ReadSequenceExtendedFunctionality) extFunc).onlyForTestGetDatabaseFactory(),
+				sqlDatabaseFactory);
+	}
+
 }

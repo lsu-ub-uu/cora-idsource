@@ -89,4 +89,11 @@ public class DeleteSequenceExtendedFunctionalityTest {
 
 	}
 
+	@Test
+	public void testOnlyForTest() {
+		assertEquals(
+				((DeleteSequenceExtendedFunctionality) extFunc).onlyForTestGetDatabaseFactory(),
+				sqlDatabaseFactory);
+	}
+
 }

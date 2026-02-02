@@ -55,4 +55,8 @@ public class CreateSequenceExtendedFunctionality implements ExtendedFunctionalit
 					.withMessageAndException("Error creating sequence with id: " + sequenceId, e);
 		}
 	}
+
+	public SqlDatabaseFactory onlyForTestGetDatabaseFactory() {
+		return sqlDatabaseFactory;
+	}
 }

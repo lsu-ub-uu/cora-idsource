@@ -64,4 +64,8 @@ public class ReadSequenceExtendedFunctionality implements ExtendedFunctionality 
 					"Error reading current value for sequence with id: " + sequenceId, e);
 		}
 	}
+
+	public SqlDatabaseFactory onlyForTestGetDatabaseFactory() {
+		return sqlDatabaseFactory;
+	}
 }

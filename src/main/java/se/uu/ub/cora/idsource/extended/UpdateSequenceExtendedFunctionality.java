@@ -55,4 +55,8 @@ public class UpdateSequenceExtendedFunctionality implements ExtendedFunctionalit
 					.withMessageAndException("Error updating sequence with id: " + sequenceId, e);
 		}
 	}
+
+	public SqlDatabaseFactory onlyForTestGetDatabaseFactory() {
+		return sqlDatabaseFactory;
+	}
 }

@@ -52,4 +52,8 @@ public class DeleteSequenceExtendedFunctionality implements ExtendedFunctionalit
 					.withMessageAndException("Error deleting sequence with id: " + sequenceId, e);
 		}
 	}
+
+	public SqlDatabaseFactory onlyForTestGetDatabaseFactory() {
+		return sqlDatabaseFactory;
+	}
 }

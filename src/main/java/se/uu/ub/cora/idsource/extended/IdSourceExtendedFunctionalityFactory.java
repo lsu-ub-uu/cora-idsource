@@ -1,5 +1,5 @@
 /*
- *	 Copyright 2025 Uppsala University Library
+ *	 Copyright 2025, 2026 Uppsala University Library
  *
  * This file is part of Cora.
  *
@@ -18,35 +18,55 @@
  */
 package se.uu.ub.cora.idsource.extended;
 
-import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.CREATE_AFTER_METADATA_VALIDATION;
-import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.UPDATE_AFTER_METADATA_VALIDATION;
+import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.CREATE_BEFORE_STORE;
+import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.DELETE_AFTER;
+import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.READLIST_BEFORE_ENHANCE_SINGLE;
+import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.READ_BEFORE_ENHANCE;
+import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.SEARCH_BEFORE_ENHANCE_SINGLE;
+import static se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition.UPDATE_BEFORE_STORE;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import se.uu.ub.cora.initialize.SettingsProvider;
 import se.uu.ub.cora.spider.dependency.SpiderDependencyProvider;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionality;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityContext;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityFactory;
 import se.uu.ub.cora.spider.extendedfunctionality.ExtendedFunctionalityPosition;
+import se.uu.ub.cora.sqldatabase.SqlDatabaseFactoryImp;
 
 public class IdSourceExtendedFunctionalityFactory implements ExtendedFunctionalityFactory {
 
+	private static final String RECORD_TYPE = "sequence";
+	private static final int RUN_AS_NUMBER = 0;
 	private List<ExtendedFunctionalityContext> contexts = new ArrayList<>();
+	private SqlDatabaseFactoryImp dbFactory;
 
 	@Override
 	public void initializeUsingDependencyProvider(SpiderDependencyProvider dependencyProvider) {
 		createListOfContexts();
+		startDatabaseFactory();
 	}
 
 	private void createListOfContexts() {
-		createContext(CREATE_AFTER_METADATA_VALIDATION);
-		createContext(UPDATE_AFTER_METADATA_VALIDATION);
+		createContext(CREATE_BEFORE_STORE);
+		createContext(UPDATE_BEFORE_STORE);
+		createContext(DELETE_AFTER);
+
+		createContext(READ_BEFORE_ENHANCE);
+		createContext(READLIST_BEFORE_ENHANCE_SINGLE);
+		createContext(SEARCH_BEFORE_ENHANCE_SINGLE);
 	}
 
 	private void createContext(ExtendedFunctionalityPosition position) {
-		contexts.add(new ExtendedFunctionalityContext(position, "sequence", 0));
+		contexts.add(new ExtendedFunctionalityContext(position, RECORD_TYPE, RUN_AS_NUMBER));
+	}
+
+	private void startDatabaseFactory() {
+		String databaseLookupValue = SettingsProvider.getSetting("coraDatabaseLookupName");
+		dbFactory = SqlDatabaseFactoryImp.usingLookupNameFromContext(databaseLookupValue);
 	}
 
 	@Override
@@ -57,6 +77,20 @@ public class IdSourceExtendedFunctionalityFactory implements ExtendedFunctionali
 	@Override
 	public List<ExtendedFunctionality> factor(ExtendedFunctionalityPosition position,
 			String recordType) {
-		return Collections.singletonList(new CreateSequenceExtendedFunctionality());
+		if (CREATE_BEFORE_STORE.equals(position)) {
+			return toList(CreateSequenceExtendedFunctionality.usingDatabaseFactory(dbFactory));
+		}
+		if (UPDATE_BEFORE_STORE.equals(position)) {
+			return toList(UpdateSequenceExtendedFunctionality.usingDatabaseFactory(dbFactory));
+		}
+		if (DELETE_AFTER.equals(position)) {
+			return toList(DeleteSequenceExtendedFunctionality.usingDatabaseFactory(dbFactory));
+		}
+		return toList(ReadSequenceExtendedFunctionality.usingDatabaseFactory(dbFactory));
 	}
+
+	private List<ExtendedFunctionality> toList(ExtendedFunctionality usingDatabaseFactory) {
+		return Collections.singletonList(usingDatabaseFactory);
+	}
+
 }
