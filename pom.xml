@@ -32,7 +32,7 @@
 
 	<properties>
 		<bookkeeper.version>11.5-SNAPSHOT</bookkeeper.version>
-		<initialize.version>1.8-SNAPSHOT</initialize.version>
+		<initialize.version>1.8.0</initialize.version>
 		<spider.version>10.6-SNAPSHOT</spider.version>
 		<coradata.version>11.1.0</coradata.version>
 		<coradata-spies.version>3.1.0</coradata-spies.version>
@@ -40,7 +40,7 @@
 		<logger.version>2.10.0</logger.version>
 		<logger-spies.version>1.5.0</logger-spies.version>
 		<storage.version>10.0.0</storage.version>
-		<sqldatabase.version>7.4-SNAPSHOT</sqldatabase.version>
+		<sqldatabase.version>7.4.0</sqldatabase.version>
 		<search.version>6.0.0</search.version>
 		<beefeater.version>4.0.0</beefeater.version>
 		<messaging.version>3.1.0</messaging.version>
