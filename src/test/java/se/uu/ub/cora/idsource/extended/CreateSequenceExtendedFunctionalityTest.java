@@ -92,7 +92,7 @@ public class CreateSequenceExtendedFunctionalityTest {
 	}
 
 	@Test
-	public void testOnlyForTest() throws Exception {
+	public void testOnlyForTest() {
 		assertEquals(
 				((CreateSequenceExtendedFunctionality) extFunc).onlyForTestGetDatabaseFactory(),
 				sqlDatabaseFactory);

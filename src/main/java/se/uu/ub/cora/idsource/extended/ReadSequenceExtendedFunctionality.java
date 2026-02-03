@@ -44,7 +44,7 @@ public class ReadSequenceExtendedFunctionality implements ExtendedFunctionality 
 	@Override
 	public void useExtendedFunctionality(ExtendedFunctionalityData data) {
 		DataRecordGroup dataRecordGroup = data.dataRecordGroup;
-		long sequenceCurrentNumbre = readCurrentNumberFromSequence(dataRecordGroup.getId());
+		long sequenceCurrentNumbre = readCurrentNumberFromSequence(dataRecordGroup);
 		replaceCurrentNumber(dataRecordGroup, sequenceCurrentNumbre);
 	}
 
@@ -56,13 +56,30 @@ public class ReadSequenceExtendedFunctionality implements ExtendedFunctionality 
 		dataRecordGroup.addChild(currentNumber);
 	}
 
-	private long readCurrentNumberFromSequence(String sequenceId) {
+	private long readCurrentNumberFromSequence(DataRecordGroup dataRecordGroup) {
+		String id = dataRecordGroup.getId();
 		try (Sequence sequence = sqlDatabaseFactory.factorSequence()) {
-			return sequence.getCurrentValueForSequence(sequenceId);
+			return tryToReadCurrentValueAndIfFailsCreateSequenceAndRetry(dataRecordGroup, id,
+					sequence);
 		} catch (Exception e) {
 			throw IdSourceException.withMessageAndException(
-					"Error reading current value for sequence with id: " + sequenceId, e);
+					"Error reading current value for sequence with id: " + id, e);
 		}
+	}
+
+	private long tryToReadCurrentValueAndIfFailsCreateSequenceAndRetry(
+			DataRecordGroup dataRecordGroup, String id, Sequence sequence) {
+		try {
+			return sequence.getCurrentValueForSequence(id);
+		} catch (Exception _) {
+			createSequence(sequence, dataRecordGroup);
+			return sequence.getCurrentValueForSequence(id);
+		}
+	}
+
+	private void createSequence(Sequence sequence, DataRecordGroup dataRecordGroup) {
+		String startValue = dataRecordGroup.getFirstAtomicValueWithNameInData(CURRENT_NUMBER);
+		sequence.createSequence(dataRecordGroup.getId(), Long.valueOf(startValue));
 	}
 
 	public SqlDatabaseFactory onlyForTestGetDatabaseFactory() {

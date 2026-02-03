@@ -42,6 +42,8 @@ public class ReadSequenceExtendedFunctionalityTest {
 	private ExtendedFunctionalityData data;
 	private SqlDatabaseFactorySpy sqlDatabaseFactory;
 	private DataFactorySpy dataFactorySpy;
+	private SequenceSpy sequenceSpy;
+	private int customReturnCounter;
 
 	@BeforeMethod
 	private void beforeMethod() {
@@ -55,8 +57,12 @@ public class ReadSequenceExtendedFunctionalityTest {
 	private void setData() {
 		dataRecordGroup = new DataRecordGroupSpy();
 		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getId", () -> "someId");
+		dataRecordGroup.MRV.setDefaultReturnValuesSupplier("getFirstAtomicValueWithNameInData",
+				() -> "998");
 		data = new ExtendedFunctionalityData();
 		data.dataRecordGroup = dataRecordGroup;
+		sequenceSpy = new SequenceSpy();
+		customReturnCounter = 0;
 	}
 
 	@AfterMethod
@@ -66,7 +72,6 @@ public class ReadSequenceExtendedFunctionalityTest {
 
 	@Test
 	public void testReadSequence() {
-		SequenceSpy sequenceSpy = new SequenceSpy();
 		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
 		sequenceSpy.MRV.setDefaultReturnValuesSupplier("getCurrentValueForSequence", () -> 222L);
 
@@ -90,7 +95,6 @@ public class ReadSequenceExtendedFunctionalityTest {
 
 	@Test
 	public void testReadSequence_error() {
-		SequenceSpy sequenceSpy = new SequenceSpy();
 		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
 		RuntimeException error = new RuntimeException("some error");
 		sequenceSpy.MRV.setAlwaysThrowException("getCurrentValueForSequence", error);
@@ -103,7 +107,33 @@ public class ReadSequenceExtendedFunctionalityTest {
 					"Error reading current value for sequence with id: someId");
 			assertEquals(e.getCause(), error);
 		}
+	}
 
+	@Test
+	public void testRetryOnlyOnceCreatingTheMissingSequence() {
+		sequenceSpy.MRV.setDefaultReturnValuesSupplier("getCurrentValueForSequence",
+				this::customReturn);
+		sqlDatabaseFactory.MRV.setDefaultReturnValuesSupplier("factorSequence", () -> sequenceSpy);
+
+		extFunc.useExtendedFunctionality(data);
+
+		sequenceSpy.MCR.assertParameters("getCurrentValueForSequence", 0, "someId");
+		assertCreateSequenceAndRetryReadCurrentValue();
+	}
+
+	private void assertCreateSequenceAndRetryReadCurrentValue() {
+		sequenceSpy.MCR.assertCalledParameters("createSequence", "someId", 998L);
+		sequenceSpy.MCR.assertNumberOfCallsToMethod("getCurrentValueForSequence", 2);
+		dataFactorySpy.MCR.assertCalledParametersReturn("factorAtomicUsingNameInDataAndValue",
+				"currentNumber", "999");
+	}
+
+	private Object customReturn() {
+		if (customReturnCounter == 0) {
+			customReturnCounter++;
+			throw new RuntimeException("some error");
+		}
+		return 999L;
 	}
 
 	@Test
