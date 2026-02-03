@@ -48,8 +48,8 @@ public class TimestampInstanceProviderTest {
 
 	@Test
 	public void testGetIdSource() {
-		TimeStampIdSource idSource = (TimeStampIdSource) provider.getIdSource(recordType);
-		assertTrue(idSource instanceof TimeStampIdSource);
+		TimestampIdSource idSource = (TimestampIdSource) provider.getIdSource(recordType);
+		assertTrue(idSource instanceof TimestampIdSource);
 		assertEquals(idSource.onlyForTestGetRecordTypeId(), recordType.id());
 	}
 

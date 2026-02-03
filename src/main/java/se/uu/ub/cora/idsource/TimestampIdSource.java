@@ -20,11 +20,11 @@ package se.uu.ub.cora.idsource;
 
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
 
-public class TimeStampIdSource implements IdSource {
+public class TimestampIdSource implements IdSource {
 
 	private String type;
 
-	public TimeStampIdSource(String type) {
+	public TimestampIdSource(String type) {
 		this.type = type;
 	}
 

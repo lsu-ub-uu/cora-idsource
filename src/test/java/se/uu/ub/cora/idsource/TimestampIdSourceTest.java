@@ -29,11 +29,11 @@ import org.testng.annotations.Test;
 
 import se.uu.ub.cora.bookkeeper.idsource.IdSource;
 
-public class TimeStampIdSourceTest {
+public class TimestampIdSourceTest {
 
 	@Test
 	public void testGenerateId() {
-		IdSource idSource = new TimeStampIdSource("type");
+		IdSource idSource = new TimestampIdSource("type");
 
 		String keyType = idSource.getId();
 		String keyType2 = idSource.getId();
@@ -44,7 +44,7 @@ public class TimeStampIdSourceTest {
 
 	@Test
 	public void testGetIdForTypeWithSimultaneousVirtualThreads() throws InterruptedException {
-		IdSource idSource = new TimeStampIdSource("type");
+		IdSource idSource = new TimestampIdSource("type");
 
 		int numberOfexecs = 1000;
 		int threadCount = 1000;
@@ -79,9 +79,9 @@ public class TimeStampIdSourceTest {
 
 	@Test
 	public void testOnlyForTest() {
-		IdSource idSource = new TimeStampIdSource("type");
+		IdSource idSource = new TimestampIdSource("type");
 
-		String passedType = ((TimeStampIdSource) idSource).onlyForTestGetRecordTypeId();
+		String passedType = ((TimestampIdSource) idSource).onlyForTestGetRecordTypeId();
 		assertEquals(passedType, "type");
 	}
 

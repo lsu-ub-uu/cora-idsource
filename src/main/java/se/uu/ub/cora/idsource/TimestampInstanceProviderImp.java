@@ -26,7 +26,7 @@ public class TimestampInstanceProviderImp implements IdSourceInstanceProvider {
 
 	@Override
 	public IdSource getIdSource(RecordType recordType) {
-		return new TimeStampIdSource(recordType.id());
+		return new TimestampIdSource(recordType.id());
 	}
 
 	@Override
